@@ -159,7 +159,7 @@ function reconcileChildren(wipFiber, elements) {
     const newFiber = {
       type: element.type,
       props: element.props,
-      parent: fiber,
+      parent: wipFiber,
       dom: null,
     };
 
@@ -178,7 +178,7 @@ function reconcileChildren(wipFiber, elements) {
     }
 
     if (index === 0) {
-      fiber.child = newFiber;
+      wipFiber.child = newFiber;
     } else {
       prevSibling.sibling = newFiber;
     }
