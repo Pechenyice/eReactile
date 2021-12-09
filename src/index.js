@@ -7,7 +7,7 @@ function createElement(type, props, ...children) {
     props: {
       ...props,
       children: children.map((child) =>
-        typeof child === "object" ? child : createTextElement(child)
+        typeof child === 'object' ? child : createTextElement(child)
       ),
     },
   };
@@ -15,7 +15,7 @@ function createElement(type, props, ...children) {
 
 function createTextElement(text) {
   return {
-    type: "TEXT_ELEMENT",
+    type: 'TEXT_ELEMENT',
     props: {
       nodeValue: text,
       children: [],
@@ -25,10 +25,10 @@ function createTextElement(text) {
 
 function createDOM(fiber) {
   const dom =
-    fiber.type === "TEXT_ELEMENT"
-      ? document.createTextNode("")
+    fiber.type === 'TEXT_ELEMENT'
+      ? document.createTextNode('')
       : document.createElement(fiber.type);
-  const isProperty = (key) => key !== "children";
+  const isProperty = (key) => key !== 'children';
   Object.keys(fiber.props)
     .filter(isProperty)
     .forEach((name) => {
@@ -38,15 +38,32 @@ function createDOM(fiber) {
   return dom;
 }
 
+function commitRoot() {
+  commitWork(wipRoot.child);
+  wipRoot = null;
+}
+
+function commitWork(fiber) {
+  if (!fiber) {
+    return;
+  }
+  const domParent = fiber.parent.dom;
+  domParent.appendChild(fiber.dom);
+  commitWork(fiber.child);
+  commitWork(fiber.sibling);
+}
+
 function render(element, container) {
-  nextUnitOfWork = {
+  wipRoot = {
     dom: container,
     props: {
       children: [element],
     },
   };
+  nextUnitOfWork = wipRoot;
 }
 
+let wipRoot = null;
 let nextUnitOfWork = null;
 
 function workLoop(deadline) {
@@ -55,6 +72,11 @@ function workLoop(deadline) {
     nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
     shouldYield = deadline.timeRemaining() < 1;
   }
+
+  if (!nextUnitOfWork && wipRoot) {
+    commitRoot();
+  }
+
   requestIdleCallback(workLoop);
 }
 
@@ -63,10 +85,6 @@ requestIdleCallback(workLoop);
 function performUnitOfWork(fiber) {
   if (!fiber.dom) {
     fiber.dom = createDOM(fiber);
-  }
-
-  if (fiber.parent) {
-    fiber.parent.dom.appendChild(fiber.dom);
   }
 
   const elements = fiber.props.children;
@@ -114,14 +132,14 @@ const element = (
   <div>
     <div>
       <div>
-        <h1>there</h1>
+        <h1>There</h1>
         <h3>is</h3>
-        <h6>loop</h6>
+        <h6>loop...</h6>
       </div>
     </div>
     <h1>Hello World!</h1>
   </div>
 );
 
-const container = document.getElementById("root");
+const container = document.getElementById('root');
 EReactile.render(element, container);
